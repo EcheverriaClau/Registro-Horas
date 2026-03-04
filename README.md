@@ -12,18 +12,6 @@ Funciona sin internet y se puede instalar en el celular como una app.
 - Funciona sin conexión (offline)
 - Instalable en pantalla de inicio (Android e iOS)
 
-## 🚀 Cómo subir a GitHub Pages
-
-1. Crear un repositorio nuevo en GitHub (ej: `registro-servicios`)
-2. Subir todos los archivos:
-   - `index.html`
-   - `manifest.json`
-   - `service-worker.js`
-   - `icon-192.png` *(ver nota abajo)*
-   - `icon-512.png` *(ver nota abajo)*
-3. Ir a **Settings → Pages → Source: main branch / root**
-4. La app quedará en: `https://tu-usuario.github.io/registro-servicios/`
-
 ## 📱 Cómo instalar en el celular
 
 ### Android (Chrome):
@@ -42,7 +30,3 @@ El manifest necesita dos íconos PNG:
 - `icon-192.png` (192×192 px)
 - `icon-512.png` (512×512 px)
 
-Podés crearlos gratis en: https://www.favicon.io/ o usar cualquier imagen verde de 📋.
-
----
-*Hecho con 💚*
