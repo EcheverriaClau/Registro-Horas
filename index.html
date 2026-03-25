@@ -12,6 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="Registro">
 
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 <style>
   :root {
@@ -31,7 +33,8 @@
     background: var(--verde-fondo);
     min-height: 100vh;
     color: var(--texto);
-    padding: 0 0 60px 0;
+    padding: 0 0 80px 0;
+    overflow-x: hidden;
   }
 
   header {
@@ -44,20 +47,15 @@
     top: 0;
     z-index: 10;
   }
-
   header h1 {
     font-family: 'DM Serif Display', serif;
     font-size: 1.6rem;
     letter-spacing: 0.5px;
     margin-bottom: 2px;
   }
+  header p { font-size: 0.78rem; opacity: 0.75; }
 
-  header p {
-    font-size: 0.78rem;
-    opacity: 0.75;
-    letter-spacing: 0.5px;
-  }
-
+  /* ── Total banner ── */
   .total-banner {
     background: var(--blanco);
     border-left: 4px solid var(--verde-medio);
@@ -71,13 +69,62 @@
     font-size: 0.9rem;
     color: var(--gris);
   }
-
   .total-banner strong {
     font-size: 1.4rem;
     color: var(--verde-oscuro);
     font-family: 'DM Serif Display', serif;
   }
+  .total-banner strong.bump {
+    animation: bump 0.45s ease;
+  }
+  @keyframes bump {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.4); color: #e65100; }
+    70%  { transform: scale(0.93); }
+    100% { transform: scale(1); color: var(--verde-oscuro); }
+  }
 
+  /* ── Popup motivacional ── */
+  .motivacion {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: white;
+    border-radius: 22px;
+    padding: 24px 32px;
+    text-align: center;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+    z-index: 200;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    min-width: 200px;
+  }
+  .motivacion.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .motivacion .emoji { font-size: 2.6rem; display: block; margin-bottom: 8px; }
+  .motivacion .msg   { font-size: 1.05rem; font-weight: 700; color: var(--verde-oscuro); }
+
+  /* ── Confetti ── */
+  .confeti-wrapper {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 199; overflow: hidden;
+  }
+  .confeti {
+    position: absolute;
+    border-radius: 2px;
+    animation: caer linear forwards;
+    top: -20px;
+  }
+  @keyframes caer {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ── Tabla ── */
   .tabla-wrapper {
     margin: 14px 16px 0;
     border-radius: 12px;
@@ -85,162 +132,82 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.07);
     background: white;
   }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13.5px;
-  }
-
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   thead th {
     background: var(--verde-medio);
-    color: white;
-    padding: 11px 8px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    font-size: 12px;
-    text-transform: uppercase;
+    color: white; padding: 11px 8px;
+    font-weight: 600; font-size: 12px; text-transform: uppercase;
   }
-
-  tbody tr {
-    border-bottom: 1px solid #e8f5e9;
-    transition: background 0.15s;
-  }
-
-  tbody tr:hover {
-    background: #f9fdf9;
-  }
-
-  tbody tr:last-child {
-    border-bottom: none;
-  }
-
-  td {
-    padding: 4px 5px;
-    vertical-align: middle;
-  }
+  tbody tr { border-bottom: 1px solid #e8f5e9; transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f9fdf9; }
+  td { padding: 4px 5px; vertical-align: middle; }
 
   input, select {
-    width: 100%;
-    border: none;
-    background: transparent;
-    padding: 7px 5px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--texto);
-    border-radius: 5px;
-    transition: background 0.15s;
+    width: 100%; border: none; background: transparent;
+    padding: 7px 5px; font-size: 13px;
+    font-family: 'DM Sans', sans-serif; color: var(--texto);
+    border-radius: 5px; transition: background 0.15s;
     -webkit-appearance: none;
   }
-
-  input:focus, select:focus {
-    outline: none;
-    background: #e8f5e9;
-  }
-
-  input[type="date"] {
-    min-width: 105px;
-  }
+  input:focus, select:focus { outline: none; background: #e8f5e9; }
+  input[type="date"] { min-width: 105px; }
 
   .nuevo-hotel-input {
-    display: none;
-    margin-top: 4px;
+    display: none; margin-top: 4px;
     border: 1px solid var(--verde-claro) !important;
-    border-radius: 5px;
-    background: #f1f8f4 !important;
-    padding: 5px 7px;
+    border-radius: 5px; background: #f1f8f4 !important; padding: 5px 7px;
   }
 
   .btn-eliminar {
-    background: none;
-    border: none;
-    color: #c62828;
-    font-size: 17px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 5px;
-    transition: background 0.15s;
-    line-height: 1;
+    background: none; border: none; color: #c62828;
+    font-size: 17px; cursor: pointer; padding: 4px 8px;
+    border-radius: 5px; transition: background 0.15s; line-height: 1;
   }
+  .btn-eliminar:hover { background: #ffebee; }
 
-  .btn-eliminar:hover {
-    background: #ffebee;
-  }
-
+  /* ── Botones ── */
   .acciones {
-    display: flex;
-    gap: 10px;
-    padding: 16px;
-    flex-wrap: wrap;
+    display: flex; gap: 10px; padding: 16px; flex-wrap: wrap;
   }
-
   .btn-agregar {
-    flex: 1;
-    background: var(--verde-medio);
-    color: white;
-    border: none;
-    padding: 13px 18px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    flex: 2; background: var(--verde-medio); color: white; border: none;
+    padding: 13px 18px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
     box-shadow: 0 3px 10px rgba(46,125,50,0.3);
     transition: background 0.2s, transform 0.1s;
   }
+  .btn-agregar:active { transform: scale(0.97); background: var(--verde-oscuro); }
 
-  .btn-agregar:active {
-    transform: scale(0.97);
-    background: var(--verde-oscuro);
-  }
-
-  .btn-exportar {
-    background: white;
-    color: var(--verde-medio);
+  .btn-pdf {
+    flex: 1; background: white;
     border: 2px solid var(--verde-claro);
-    padding: 13px 16px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.15s;
+    padding: 13px 10px; border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    transition: background 0.15s; color: var(--verde-medio);
   }
+  .btn-pdf { border-color: #ef9a9a; color: #c62828; }
+  .btn-pdf:hover { background: #ffebee; }
 
-  .btn-exportar:hover {
-    background: #e8f5e9;
+  .empty-msg {
+    text-align: center; padding: 30px 16px;
+    color: var(--gris); font-size: 13.5px;
   }
 
   footer {
-    text-align: center;
-    padding: 24px 16px 10px;
-    color: var(--gris);
-    font-size: 12px;
-  }
-
-  /* Mensaje si no hay filas */
-  .empty-msg {
-    text-align: center;
-    padding: 30px 16px;
-    color: var(--gris);
-    font-size: 13.5px;
+    text-align: center; padding: 24px 16px 10px;
+    color: var(--gris); font-size: 12px;
   }
 
   @media (max-width: 420px) {
     header h1 { font-size: 1.3rem; }
-    table { font-size: 12.5px; }
-    .acciones { gap: 8px; }
+    table { font-size: 12px; }
   }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -250,18 +217,14 @@
 
 <div class="total-banner">
   <span>Total de horas registradas</span>
-  <strong><span id="totalHoras">0</span> h</strong>
+  <strong id="totalHoras">0 h</strong>
 </div>
 
 <div class="tabla-wrapper">
   <table id="tablaRegistro">
     <thead>
       <tr>
-        <th>Fecha</th>
-        <th>Hotel</th>
-        <th>Servicio</th>
-        <th>Hrs</th>
-        <th></th>
+        <th>Fecha</th><th>Hotel</th><th>Servicio</th><th>Hrs</th><th></th>
       </tr>
     </thead>
     <tbody id="cuerpoTabla"></tbody>
@@ -270,12 +233,16 @@
 
 <div class="acciones">
   <button class="btn-agregar" onclick="agregarFila()">＋ Agregar fila</button>
-  <button class="btn-exportar" onclick="exportarCSV()">⬇ Exportar</button>
+  <button class="btn-pdf"     onclick="exportarPDF()">📄 PDF</button>
 </div>
 
-<footer>
-  &copy; 2026 Registro de Servicios &nbsp;·&nbsp; Te amo 💚
-</footer>
+<div class="motivacion" id="motivacion">
+  <span class="emoji" id="motEmoji">🌟</span>
+  <span class="msg"   id="motMsg">¡Excelente!</span>
+</div>
+<div class="confeti-wrapper" id="confettiWrapper"></div>
+
+<footer>&copy; 2026 Registro de Servicios &nbsp;·&nbsp; Te amo 💚</footer>
 
 <script>
 // ── Datos ──────────────────────────────────────────────
@@ -283,23 +250,59 @@ const STORAGE_KEY = "registroServicios_v2";
 const HOTELES_KEY  = "hotelesLista_v2";
 
 let hotelesBase = ["Centre Ville", "Longueuil"];
-let hoteles = JSON.parse(localStorage.getItem(HOTELES_KEY)) || [...hotelesBase];
-
-// Cada registro es un objeto plano (no innerHTML)
+let hoteles   = JSON.parse(localStorage.getItem(HOTELES_KEY))  || [...hotelesBase];
 let registros = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
 function guardarTodo() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
   localStorage.setItem(HOTELES_KEY, JSON.stringify(hoteles));
 }
-
-// ── Utilidades ─────────────────────────────────────────
-function fechaHoy() {
-  return new Date().toISOString().split("T")[0];
+function fechaHoy() { return new Date().toISOString().split("T")[0]; }
+function nuevoRegistro() {
+  return { id: Date.now(), fecha: fechaHoy(), hotel: hoteles[0]||"", servicio:"Gouvernante", horas:"" };
 }
 
-function nuevoRegistro() {
-  return { id: Date.now(), fecha: fechaHoy(), hotel: hoteles[0] || "", servicio: "Gouvernante", horas: "" };
+// ── Motivación ─────────────────────────────────────────
+const frases = [
+  { emoji:"💪", msg:"¡Sos increíble!" },
+  { emoji:"🌟", msg:"¡Otra hora más!" },
+  { emoji:"🏆", msg:"¡Campeona!" },
+  { emoji:"✨", msg:"¡Sigue así!" },
+  { emoji:"🌺", msg:"¡Orgulloso de vos!" },
+  { emoji:"🔥", msg:"¡En llamas!" },
+  { emoji:"💚", msg:"¡Te amo mucho!" },
+  { emoji:"🦋", msg:"¡Volando alto!" },
+  { emoji:"⭐", msg:"¡Estrella del día!" },
+  { emoji:"🎯", msg:"¡Objetivo cumplido!" },
+];
+let ultimoTotal = 0;
+
+function mostrarMotivacion() {
+  const f = frases[Math.floor(Math.random() * frases.length)];
+  document.getElementById("motEmoji").textContent = f.emoji;
+  document.getElementById("motMsg").textContent   = f.msg;
+  const popup = document.getElementById("motivacion");
+  popup.classList.add("show");
+  lanzarConfetti();
+  setTimeout(() => popup.classList.remove("show"), 1900);
+}
+
+function lanzarConfetti() {
+  const w = document.getElementById("confettiWrapper");
+  w.innerHTML = "";
+  const colores = ["#2e7d32","#66bb6a","#ffca28","#ef5350","#42a5f5","#ab47bc","#ff7043"];
+  for (let i = 0; i < 42; i++) {
+    const c = document.createElement("div");
+    c.className = "confeti";
+    c.style.left   = Math.random()*100 + "vw";
+    c.style.background = colores[Math.floor(Math.random()*colores.length)];
+    c.style.animationDuration = (1.1 + Math.random()*1.3) + "s";
+    c.style.animationDelay    = (Math.random()*0.5) + "s";
+    c.style.width  = (6 + Math.random()*8) + "px";
+    c.style.height = (6 + Math.random()*8) + "px";
+    w.appendChild(c);
+  }
+  setTimeout(() => w.innerHTML = "", 2800);
 }
 
 // ── Render ─────────────────────────────────────────────
@@ -307,143 +310,153 @@ function render() {
   const tbody = document.getElementById("cuerpoTabla");
   tbody.innerHTML = "";
 
-  if (registros.length === 0) {
+  if (!registros.length) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-msg">Sin registros aún.<br>Toca <strong>+ Agregar fila</strong> para empezar.</div></td></tr>`;
-    calcularTotal();
+    calcularTotal(false);
     return;
   }
 
   registros.forEach((r, i) => {
     const tr = document.createElement("tr");
-
-    // --- Hotel select + input nuevo ---
-    const hotelOptions = hoteles.map(h =>
-      `<option value="${h}" ${r.hotel === h ? "selected" : ""}>${h}</option>`
-    ).join("");
-
+    const opts = hoteles.map(h => `<option value="${h}" ${r.hotel===h?"selected":""}>${h}</option>`).join("");
     tr.innerHTML = `
-      <td>
-        <input type="date" value="${r.fecha}" data-i="${i}" data-campo="fecha">
-      </td>
+      <td><input type="date" value="${r.fecha}" data-i="${i}" data-campo="fecha"></td>
       <td>
         <select data-i="${i}" data-campo="hotel" onchange="manejarHotel(this)">
-          ${hotelOptions}
+          ${opts}
           <option value="__nuevo__">+ Agregar hotel…</option>
         </select>
         <input class="nuevo-hotel-input" type="text" placeholder="Nombre del hotel" data-i="${i}">
       </td>
       <td>
         <select data-i="${i}" data-campo="servicio">
-          <option value="Gouvernante" ${r.servicio === "Gouvernante" ? "selected" : ""}>Gouvernante</option>
-          <option value="Femme Chambre" ${r.servicio === "Femme Chambre" ? "selected" : ""}>Femme Chambre</option>
+          <option value="Gouvernante"   ${r.servicio==="Gouvernante"   ?"selected":""}>Gouvernante</option>
+          <option value="Femme Chambre" ${r.servicio==="Femme Chambre" ?"selected":""}>Femme Chambre</option>
         </select>
       </td>
-      <td>
-        <input type="number" min="0" step="0.5" value="${r.horas}" data-i="${i}" data-campo="horas" style="max-width:60px;">
-      </td>
+      <td><input type="number" min="0" step="0.5" value="${r.horas}" data-i="${i}" data-campo="horas" style="max-width:60px;"></td>
       <td style="text-align:center;">
-        <button class="btn-eliminar" onclick="eliminarFila(${i})" title="Eliminar">✕</button>
-      </td>
-    `;
-
+        <button class="btn-eliminar" onclick="eliminarFila(${i})">✕</button>
+      </td>`;
     tbody.appendChild(tr);
   });
 
-  // Eventos para inputs y selects normales
   tbody.querySelectorAll("input[data-campo], select[data-campo]").forEach(el => {
     el.addEventListener("change", () => {
-      const i = +el.dataset.i;
-      const campo = el.dataset.campo;
-      registros[i][campo] = el.value;
+      registros[+el.dataset.i][el.dataset.campo] = el.value;
       guardarTodo();
-      calcularTotal();
+      calcularTotal(el.dataset.campo === "horas");
     });
   });
 
-  // Eventos para inputs de nuevo hotel
   tbody.querySelectorAll("input.nuevo-hotel-input").forEach(inp => {
     inp.addEventListener("blur", () => {
-      const nombre = inp.value.trim();
-      if (nombre && !hoteles.includes(nombre)) {
-        hoteles.push(nombre);
-        const i = +inp.dataset.i;
-        registros[i].hotel = nombre;
-        guardarTodo();
-        render();
+      const n = inp.value.trim();
+      if (n && !hoteles.includes(n)) {
+        hoteles.push(n);
+        registros[+inp.dataset.i].hotel = n;
+        guardarTodo(); render();
       }
     });
-    inp.addEventListener("keydown", e => {
-      if (e.key === "Enter") inp.blur();
-    });
+    inp.addEventListener("keydown", e => { if (e.key==="Enter") inp.blur(); });
   });
 
-  calcularTotal();
+  calcularTotal(false);
 }
 
-function manejarHotel(select) {
-  if (select.value === "__nuevo__") {
-    const inp = select.nextElementSibling;
-    inp.style.display = "block";
-    inp.focus();
+function manejarHotel(sel) {
+  if (sel.value === "__nuevo__") {
+    sel.nextElementSibling.style.display = "block";
+    sel.nextElementSibling.focus();
   } else {
-    const i = +select.dataset.i;
-    registros[i].hotel = select.value;
+    registros[+sel.dataset.i].hotel = sel.value;
     guardarTodo();
   }
+}
+
+// ── Total ──────────────────────────────────────────────
+function calcularTotal(animar) {
+  const total = registros.reduce((s, r) => s + (parseFloat(r.horas)||0), 0);
+  const txt   = (Number.isInteger(total) ? total : total.toFixed(1)) + " h";
+  const el    = document.getElementById("totalHoras");
+  el.textContent = txt;
+  if (animar && total > ultimoTotal) {
+    el.classList.remove("bump");
+    void el.offsetWidth;
+    el.classList.add("bump");
+    mostrarMotivacion();
+  }
+  ultimoTotal = total;
 }
 
 // ── Acciones ───────────────────────────────────────────
 function agregarFila() {
   registros.push(nuevoRegistro());
-  guardarTodo();
-  render();
-  // Scroll al final
-  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
+  guardarTodo(); render();
+  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" }), 50);
 }
 
 function eliminarFila(i) {
   if (!confirm("¿Eliminar esta fila?")) return;
   registros.splice(i, 1);
-  guardarTodo();
-  render();
+  guardarTodo(); render();
 }
 
-function calcularTotal() {
-  const total = registros.reduce((sum, r) => sum + (parseFloat(r.horas) || 0), 0);
-  document.getElementById("totalHoras").textContent =
-    Number.isInteger(total) ? total : total.toFixed(1);
-}
+// ── PDF ────────────────────────────────────────────────
+function exportarPDF() {
+  if (!registros.length) { alert("No hay registros."); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
 
-// ── Exportar CSV ────────────────────────────────────────
-function exportarCSV() {
-  if (registros.length === 0) { alert("No hay registros para exportar."); return; }
+  const verde      = [46,125,50];
+  const verdeClaro = [200,230,201];
+  const blanco     = [255,255,255];
 
-  const encabezado = ["Fecha", "Hotel", "Servicio", "Horas"];
-  const filas = registros.map(r => [r.fecha, r.hotel, r.servicio, r.horas || 0]);
-  const totalRow = ["", "", "TOTAL", registros.reduce((s, r) => s + (parseFloat(r.horas)||0), 0)];
+  // Header
+  doc.setFillColor(...verde);
+  doc.rect(0,0,210,30,"F");
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(20); doc.setFont("helvetica","bold");
+  doc.text("Registro de Servicios", 105, 14, { align:"center" });
+  doc.setFontSize(9);  doc.setFont("helvetica","normal");
+  doc.text(
+    `Generado: ${new Date().toLocaleDateString("es-CA",{year:"numeric",month:"long",day:"numeric"})}`,
+    105, 23, { align:"center" }
+  );
 
-  const csv = [encabezado, ...filas, totalRow]
-    .map(row => row.map(v => `"${v}"`).join(","))
-    .join("\n");
+  // Tabla
+  const total = registros.reduce((s,r)=>s+(parseFloat(r.horas)||0),0);
+  const totalTxt = (Number.isInteger(total)?total:total.toFixed(1)) + " h";
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href = url;
-  a.download = `registro_${fechaHoy()}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  doc.autoTable({
+    startY: 36,
+    head: [["Fecha","Hotel","Servicio","Horas"]],
+    body: registros.map(r=>[r.fecha, r.hotel, r.servicio, (r.horas||0)+" h"]),
+    foot: [["","","TOTAL", totalTxt]],
+    theme: "grid",
+    headStyles:  { fillColor:verde,      textColor:blanco,       fontStyle:"bold", fontSize:10 },
+    footStyles:  { fillColor:verdeClaro, textColor:[27,94,32],   fontStyle:"bold", fontSize:10 },
+    bodyStyles:  { fontSize:9, textColor:[33,33,33] },
+    alternateRowStyles: { fillColor:[240,249,241] },
+    columnStyles: { 3:{ halign:"center" } },
+    margin: { left:14, right:14 },
+  });
+
+  // Pie
+  const fy = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(8); doc.setTextColor(160,160,160);
+  doc.text("Te amo \u{1F49A}  ·  Registro de Servicios 2026", 105, fy, { align:"center" });
+
+  doc.save(`registro_${fechaHoy()}.pdf`);
 }
 
 // ── Service Worker ─────────────────────────────────────
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js")
-    .catch(err => console.warn("SW no registrado:", err));
+    .catch(e => console.warn("SW:", e));
 }
 
-// ── Inicio ─────────────────────────────────────────────
 render();
 </script>
-
 </body>
 </html>
